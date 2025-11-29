@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單字記憶卡 (Flashcards)</title>
+    <!-- 引入 Tailwind CSS (CDN) 用於快速排版 [web:1][web:4] -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定義錯誤搖晃動畫 */
+        .shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
+
+    <div class="max-w-2xl mx-auto py-8 px-4">
+        <!-- 標題與導航 -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-blue-600 mb-4">📝 單字記憶卡</h1>
+            <div class="inline-flex bg-white rounded-lg shadow p-1">
+                <button onclick="switchTab('quiz')" id="btn-quiz" class="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-blue-500 text-white">
+                    測驗模式
+                </button>
+                <button onclick="switchTab('manage')" id="btn-manage" class="px-6 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50">
+                    單字管理
+                </button>
+            </div>
+        </header>
+
+        <!-- 測驗模式區塊 -->
+        <main id="view-quiz" class="space-y-6">
+            <div class="bg-white rounded-xl shadow-md p-8 text-center relative overflow-hidden">
+                
+                <!-- 題目顯示區 -->
+                <div id="quiz-card" class="mb-8">
+                    <span id="quiz-pos" class="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded mb-2">詞性</span>
+                    <h2 id="quiz-meaning" class="text-4xl font-bold text-gray-800 mb-6">中文意思</h2>
+                    
+                    <!-- 輸入框 -->
+                    <div class="relative max-w-md mx-auto">
+                        <input type="text" 
+                               id="quiz-input" 
+                               placeholder="請輸入英文拼字..." 
+                               class="w-full text-center text-2xl border-b-4 border-gray-300 focus:border-blue-500 outline-none py-2 bg-transparent transition-colors"
+                               autocomplete="off">
+                        <p id="error-msg" class="text-red-500 text-sm mt-2 h-5 opacity-0 transition-opacity font-bold">拼字錯誤！</p>
+                    </div>
+                </div>
+
+                <!-- 結果反饋區 -->
+                <div id="result-area" class="hidden">
+                    <div class="text-green-600 text-xl font-bold mb-4">🎉 答對了！ <span id="answer-display"></span></div>
+                    <button onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow transition-transform hover:scale-105">
+                        下一題 (Enter)
+                    </button>
+                </div>
+
+                <div id="empty-state" class="hidden text-gray-500">
+                    目前沒有單字，請先至「單字管理」新增。
+                </div>
+            </div>
+            
+            <div class="text-center text-gray-400 text-sm">
+                提示：輸入錯誤時輸入框會變紅。
+            </div>
+        </main>
+
+        <!-- 單字管理區塊 -->
+        <main id="view-manage" class="hidden space-y-6">
+            <!-- 新增單字表單 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold mb-4 border-b pb-2">新增單字</h3>
+                <form id="add-form" class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                    <input type="text" id="input-spelling" placeholder="英文拼字 (e.g. Apple)" required 
+                           class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none">
+                    <input type="text" id="input-meaning" placeholder="中文意思 (e.g. 蘋果)" required 
+                           class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none">
+                    <input type="text" id="input-pos" placeholder="詞性 (e.g. n.)" required 
+                           class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none">
+                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors">
+                        新增
+                    </button>
+                </form>
+            </div>
+
+            <!-- 單字列表 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="p-4 font-semibold text-gray-600">英文</th>
+                                <th class="p-4 font-semibold text-gray-600">中文</th>
+                                <th class="p-4 font-semibold text-gray-600">詞性</th>
+                                <th class="p-4 font-semibold text-gray-600 w-20">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="word-list-body" class="divide-y divide-gray-100">
+                            <!-- JS 動態生成內容 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="list-empty-msg" class="p-8 text-center text-gray-500 hidden">
+                    暫無單字，快去新增吧！
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- 1. 資料與狀態管理 ---
+        const STORAGE_KEY = 'vocab_cards_data';
+        let words = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let currentWord = null;
+
+        // --- 2. 初始化與事件監聽 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderList();
+            if (words.length > 0) nextQuestion();
+            else showEmptyState();
+            
+            // 綁定新增表單
+            document.getElementById('add-form').addEventListener('submit', handleAddWord);
+            
+            // 綁定輸入框即時檢查 [web:10][web:12]
+            const input = document.getElementById('quiz-input');
+            input.addEventListener('input', handleInputCheck);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !document.getElementById('result-area').classList.contains('hidden')) {
+                    nextQuestion();
+                }
+            });
+        });
+
+        // --- 3. 核心邏輯：即時檢查 ---
+        function handleInputCheck(e) {
+            if (!currentWord) return;
+
+            const inputVal = e.target.value.trim(); // 不轉小寫，保留大小寫練習，或視需求 e.target.value.toLowerCase()
+            const target = currentWord.spelling;
+            const errorMsg = document.getElementById('error-msg');
+            const inputEl = e.target;
+
+            // 邏輯 A: 完全匹配 -> 成功
+            if (inputVal === target) {
+                showSuccess();
+                return;
+            }
+
+            // 邏輯 B: 前綴檢查 (即時錯誤反饋)
+            // 如果使用者輸入的內容不是目標單字的前綴 (例如 target: apple, input: apx)，則報錯
+            if (!target.startsWith(inputVal)) {
+                inputEl.classList.add('border-red-500', 'text-red-600', 'shake');
+                inputEl.classList.remove('border-gray-300', 'focus:border-blue-500');
+                errorMsg.classList.remove('opacity-0');
+                
+                // 動畫重置 hack
+                setTimeout(() => inputEl.classList.remove('shake'), 300);
+            } else {
+                // 輸入正確但未完成
+                resetInputStyles(inputEl);
+            }
+        }
+
+        function resetInputStyles(el) {
+            el.classList.remove('border-red-500', 'text-red-600', 'border-green-500', 'text-green-600');
+            el.classList.add('border-gray-300', 'focus:border-blue-500');
+            document.getElementById('error-msg').classList.add('opacity-0');
+        }
+
+        function showSuccess() {
+            const inputEl = document.getElementById('quiz-input');
+            inputEl.classList.remove('border-gray-300', 'focus:border-blue-500', 'border-red-500', 'text-red-600');
+            inputEl.classList.add('border-green-500', 'text-green-600'); // 成功綠色
+            inputEl.disabled = true;
+
+            document.getElementById('answer-display').textContent = currentWord.spelling;
+            document.getElementById('result-area').classList.remove('hidden');
+            // 自動聚焦到按鈕以便 Enter 下一題
+            document.querySelector('#result-area button').focus(); 
+        }
+
+        // --- 4. 測驗流程控制 ---
+        function nextQuestion() {
+            if (words.length === 0) return;
+
+            // 隨機選題
+            const randomIndex = Math.floor(Math.random() * words.length);
+            currentWord = words[randomIndex];
+
+            // UI 重置
+            const inputEl = document.getElementById('quiz-input');
+            inputEl.value = '';
+            inputEl.disabled = false;
+            resetInputStyles(inputEl);
+            inputEl.focus();
+
+            document.getElementById('quiz-meaning').textContent = currentWord.meaning;
+            document.getElementById('quiz-pos').textContent = currentWord.pos;
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('quiz-card').classList.remove('hidden');
+        }
+
+        function showEmptyState() {
+            document.getElementById('quiz-card').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+        }
+
+        // --- 5. 單字管理邏輯 ---
+        function handleAddWord(e) {
+            e.preventDefault();
+            const spelling = document.getElementById('input-spelling').value.trim();
+            const meaning = document.getElementById('input-meaning').value.trim
