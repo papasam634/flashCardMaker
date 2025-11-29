@@ -3,220 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>單字記憶卡 (Flashcards)</title>
-    <!-- 引入 Tailwind CSS (CDN) 用於快速排版 [web:1][web:4] -->
+    <title>單字記憶卡 (修復版)</title>
+    <!-- 嘗試載入 Tailwind，但如果不成功，下方的 <style> 會作為保險 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 自定義錯誤搖晃動畫 */
-        .shake {
-            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
-        }
+        /* --- 核心功能樣式 (確保沒有 Tailwind 也能運作) --- */
+        .hidden { display: none !important; }
+        .block { display: block !important; }
+        
+        /* 錯誤搖晃動畫 */
+        .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
             20%, 80% { transform: translate3d(2px, 0, 0); }
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
+        
+        /* 基本排版保底 (若 CDN 掛掉時使用) */
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; padding: 20px; }
+        .btn { cursor: pointer; padding: 8px 16px; border-radius: 6px; border: none; font-weight: bold; }
+        .btn-blue { background-color: #3b82f6; color: white; }
+        .btn-red { background-color: #ef4444; color: white; }
+        .input-field { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
 
-    <div class="max-w-2xl mx-auto py-8 px-4">
-        <!-- 標題與導航 -->
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-blue-600 mb-4">📝 單字記憶卡</h1>
-            <div class="inline-flex bg-white rounded-lg shadow p-1">
-                <button onclick="switchTab('quiz')" id="btn-quiz" class="px-6 py-2 rounded-md text-sm font-medium transition-colors bg-blue-500 text-white">
+    <div class="max-w-2xl mx-auto bg-white min-h-[500px] rounded-xl shadow-lg p-6">
+        <!-- 頂部導航 -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
+            <h1 class="text-2xl font-bold text-gray-700">📝 單字記憶卡</h1>
+            <div class="flex gap-2 bg-gray-100 p-1 rounded-lg">
+                <button onclick="switchTab('quiz')" id="btn-quiz" class="btn px-4 py-2 rounded shadow-sm bg-blue-600 text-white transition-all">
                     測驗模式
                 </button>
-                <button onclick="switchTab('manage')" id="btn-manage" class="px-6 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 hover:bg-gray-50">
+                <button onclick="switchTab('manage')" id="btn-manage" class="btn px-4 py-2 rounded text-gray-600 hover:bg-gray-200 transition-all">
                     單字管理
                 </button>
             </div>
         </header>
 
-        <!-- 測驗模式區塊 -->
-        <main id="view-quiz" class="space-y-6">
-            <div class="bg-white rounded-xl shadow-md p-8 text-center relative overflow-hidden">
-                
-                <!-- 題目顯示區 -->
-                <div id="quiz-card" class="mb-8">
-                    <span id="quiz-pos" class="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded mb-2">詞性</span>
-                    <h2 id="quiz-meaning" class="text-4xl font-bold text-gray-800 mb-6">中文意思</h2>
+        <!-- 錯誤訊息提示區 (Debug用) -->
+        <div id="system-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+
+        <!-- 1. 測驗模式 -->
+        <main id="view-quiz" class="text-center space-y-8">
+            <div id="quiz-container" class="py-8">
+                <!-- 題目卡片 -->
+                <div id="quiz-card">
+                    <span id="quiz-pos" class="inline-block bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded mb-2">詞性</span>
+                    <h2 id="quiz-meaning" class="text-4xl font-bold text-gray-800 mb-8">準備中...</h2>
                     
-                    <!-- 輸入框 -->
-                    <div class="relative max-w-md mx-auto">
-                        <input type="text" 
-                               id="quiz-input" 
-                               placeholder="請輸入英文拼字..." 
-                               class="w-full text-center text-2xl border-b-4 border-gray-300 focus:border-blue-500 outline-none py-2 bg-transparent transition-colors"
-                               autocomplete="off">
-                        <p id="error-msg" class="text-red-500 text-sm mt-2 h-5 opacity-0 transition-opacity font-bold">拼字錯誤！</p>
+                    <div class="relative max-w-xs mx-auto">
+                        <input type="text" id="quiz-input" placeholder="輸入單字..." autocomplete="off"
+                               class="w-full text-center text-2xl border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 bg-transparent">
+                        <p id="error-msg" class="text-red-500 text-sm mt-2 h-5 opacity-0 font-bold">拼字錯誤</p>
                     </div>
                 </div>
 
-                <!-- 結果反饋區 -->
+                <!-- 答對顯示 -->
                 <div id="result-area" class="hidden">
-                    <div class="text-green-600 text-xl font-bold mb-4">🎉 答對了！ <span id="answer-display"></span></div>
-                    <button onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow transition-transform hover:scale-105">
+                    <div class="text-green-600 text-2xl font-bold mb-4">🎉 正確：<span id="answer-display"></span></div>
+                    <button onclick="nextQuestion()" class="btn btn-blue text-lg px-8 py-2 shadow-lg transform hover:scale-105 transition">
                         下一題 (Enter)
                     </button>
                 </div>
 
-                <div id="empty-state" class="hidden text-gray-500">
-                    目前沒有單字，請先至「單字管理」新增。
+                <!-- 無資料狀態 -->
+                <div id="empty-state" class="hidden py-10">
+                    <p class="text-gray-500 text-lg mb-4">題庫是空的</p>
+                    <button onclick="switchTab('manage')" class="text-blue-500 hover:underline">前往新增單字 →</button>
                 </div>
-            </div>
-            
-            <div class="text-center text-gray-400 text-sm">
-                提示：輸入錯誤時輸入框會變紅。
             </div>
         </main>
 
-        <!-- 單字管理區塊 -->
-        <main id="view-manage" class="hidden space-y-6">
-            <!-- 新增單字表單 -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h3 class="text-lg font-bold mb-4 border-b pb-2">新增單字</h3>
-                <form id="add-form" class="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    <input type="text" id="input-spelling" placeholder="英文拼字 (e.g. Apple)" required 
-                           class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none">
-                    <input type="text" id="input-meaning" placeholder="中文意思 (e.g. 蘋果)" required 
-                           class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none">
-                    <input type="text" id="input-pos" placeholder="詞性 (e.g. n.)" required 
-                           class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none">
-                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors">
-                        新增
-                    </button>
+        <!-- 2. 管理模式 -->
+        <main id="view-manage" class="hidden">
+            <!-- 新增表單 -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+                <h3 class="font-bold mb-3 text-gray-700">➕ 新增單字</h3>
+                <form id="add-form" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="input-spelling" placeholder="英文 (Apple)" required class="input-field">
+                    <input type="text" id="input-meaning" placeholder="中文 (蘋果)" required class="input-field">
+                    <input type="text" id="input-pos" placeholder="詞性 (n.)" required class="input-field">
+                    <button type="submit" class="btn btn-blue md:col-span-1">新增</button>
                 </form>
             </div>
 
-            <!-- 單字列表 -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 border-b">
-                                <th class="p-4 font-semibold text-gray-600">英文</th>
-                                <th class="p-4 font-semibold text-gray-600">中文</th>
-                                <th class="p-4 font-semibold text-gray-600">詞性</th>
-                                <th class="p-4 font-semibold text-gray-600 w-20">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="word-list-body" class="divide-y divide-gray-100">
-                            <!-- JS 動態生成內容 -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="list-empty-msg" class="p-8 text-center text-gray-500 hidden">
-                    暫無單字，快去新增吧！
-                </div>
+            <!-- 工具列 -->
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-gray-700">單字列表 (<span id="word-count">0</span>)</h3>
+                <button onclick="resetData()" class="text-xs text-red-400 hover:text-red-600 underline">
+                    ⚠️ 重置所有資料
+                </button>
+            </div>
+
+            <!-- 列表 -->
+            <div class="overflow-y-auto max-h-[400px] border rounded bg-white">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-100 sticky top-0">
+                        <tr>
+                            <th class="p-3 border-b text-sm text-gray-600">英文</th>
+                            <th class="p-3 border-b text-sm text-gray-600">中文</th>
+                            <th class="p-3 border-b text-sm text-gray-600">詞性</th>
+                            <th class="p-3 border-b text-sm text-gray-600">刪除</th>
+                        </tr>
+                    </thead>
+                    <tbody id="word-list-body" class="divide-y">
+                        <!-- JS 渲染 -->
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
 
     <script>
-        // --- 1. 資料與狀態管理 ---
-        const STORAGE_KEY = 'vocab_cards_data';
-        let words = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        const STORAGE_KEY = 'vocab_app_v2';
+        let words = [];
         let currentWord = null;
 
-        // --- 2. 初始化與事件監聽 ---
+        // --- 初始化 ---
         document.addEventListener('DOMContentLoaded', () => {
-            renderList();
-            if (words.length > 0) nextQuestion();
-            else showEmptyState();
+            loadWords(); // 載入資料
+            setupEventListeners(); // 綁定事件
             
-            // 綁定新增表單
+            // 預設顯示測驗介面
+            if (words.length > 0) {
+                nextQuestion();
+            } else {
+                showEmptyState();
+            }
+        });
+
+        function setupEventListeners() {
+            // 表單提交
             document.getElementById('add-form').addEventListener('submit', handleAddWord);
             
-            // 綁定輸入框即時檢查 [web:10][web:12]
+            // 測驗輸入框監聽
             const input = document.getElementById('quiz-input');
             input.addEventListener('input', handleInputCheck);
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !document.getElementById('result-area').classList.contains('hidden')) {
-                    nextQuestion();
+                if (e.key === 'Enter') {
+                    const resultArea = document.getElementById('result-area');
+                    if (!resultArea.classList.contains('hidden')) {
+                        nextQuestion();
+                    }
                 }
             });
-        });
+        }
 
-        // --- 3. 核心邏輯：即時檢查 ---
+        // --- 資料處理 ---
+        function loadWords() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    words = JSON.parse(data);
+                }
+            } catch (e) {
+                console.error("資料讀取失敗", e);
+                showSystemMessage("讀取歷史資料失敗，已重置。");
+                words = [];
+            }
+            updateCount();
+            renderList();
+        }
+
+        function saveWords() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+                updateCount();
+            } catch (e) {
+                showSystemMessage("儲存失敗 (可能是空間不足或是私密瀏覽模式)");
+            }
+        }
+
+        function resetData() {
+            if(confirm('確定要刪除所有單字嗎？此動作無法復原。')) {
+                words = [];
+                saveWords();
+                renderList();
+                switchTab('quiz'); // 強制跳回首頁重整狀態
+                showEmptyState();
+            }
+        }
+
+        // --- 核心功能：新增單字 ---
+        function handleAddWord(e) {
+            e.preventDefault();
+            const spelling = document.getElementById('input-spelling').value.trim();
+            const meaning = document.getElementById('input-meaning').value.trim();
+            const pos = document.getElementById('input-pos').value.trim();
+
+            if (!spelling || !meaning) return;
+
+            words.push({ id: Date.now(), spelling, meaning, pos });
+            saveWords();
+            renderList();
+            
+            // 清空表單並聚焦
+            e.target.reset();
+            document.getElementById('input-spelling').focus();
+            
+            // 如果是第一筆資料，立刻更新測驗區
+            if (words.length === 1) {
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('quiz-card').classList.remove('hidden');
+                nextQuestion();
+            }
+        }
+
+        // --- 核心功能：刪除單字 ---
+        function deleteWord(id) {
+            words = words.filter(w => w.id !== id);
+            saveWords();
+            renderList();
+            
+            // 如果刪到沒字了
+            if (words.length === 0) {
+                showEmptyState();
+            } else if (currentWord && currentWord.id === id) {
+                // 如果刪除的是當前正在考的字，跳下一題
+                nextQuestion();
+            }
+        }
+
+        // --- 核心功能：即時拼字檢查 ---
         function handleInputCheck(e) {
             if (!currentWord) return;
-
-            const inputVal = e.target.value.trim(); // 不轉小寫，保留大小寫練習，或視需求 e.target.value.toLowerCase()
+            
+            const inputVal = e.target.value; // 區分大小寫，若要忽略可改用 .toLowerCase()
             const target = currentWord.spelling;
-            const errorMsg = document.getElementById('error-msg');
             const inputEl = e.target;
+            const errorMsg = document.getElementById('error-msg');
 
-            // 邏輯 A: 完全匹配 -> 成功
+            // 1. 完全正確
             if (inputVal === target) {
-                showSuccess();
+                inputEl.classList.remove('border-red-500', 'text-red-600');
+                inputEl.classList.add('border-green-500', 'text-green-600');
+                inputEl.disabled = true;
+                errorMsg.style.opacity = '0';
+                
+                document.getElementById('answer-display').textContent = target;
+                document.getElementById('result-area').classList.remove('hidden');
+                document.querySelector('#result-area button').focus();
                 return;
             }
 
-            // 邏輯 B: 前綴檢查 (即時錯誤反饋)
-            // 如果使用者輸入的內容不是目標單字的前綴 (例如 target: apple, input: apx)，則報錯
+            // 2. 檢查前綴 (是否目前為止都對)
             if (!target.startsWith(inputVal)) {
+                // 打錯字了
                 inputEl.classList.add('border-red-500', 'text-red-600', 'shake');
                 inputEl.classList.remove('border-gray-300', 'focus:border-blue-500');
-                errorMsg.classList.remove('opacity-0');
+                errorMsg.style.opacity = '1';
                 
-                // 動畫重置 hack
+                // 移除動畫 class 讓下次還能觸發
                 setTimeout(() => inputEl.classList.remove('shake'), 300);
             } else {
-                // 輸入正確但未完成
-                resetInputStyles(inputEl);
+                // 目前為止是對的 (但還沒打完)
+                inputEl.classList.remove('border-red-500', 'text-red-600', 'border-green-500', 'text-green-600');
+                inputEl.classList.add('border-gray-300', 'focus:border-blue-500');
+                errorMsg.style.opacity = '0';
             }
         }
 
-        function resetInputStyles(el) {
-            el.classList.remove('border-red-500', 'text-red-600', 'border-green-500', 'text-green-600');
-            el.classList.add('border-gray-300', 'focus:border-blue-500');
-            document.getElementById('error-msg').classList.add('opacity-0');
-        }
-
-        function showSuccess() {
-            const inputEl = document.getElementById('quiz-input');
-            inputEl.classList.remove('border-gray-300', 'focus:border-blue-500', 'border-red-500', 'text-red-600');
-            inputEl.classList.add('border-green-500', 'text-green-600'); // 成功綠色
-            inputEl.disabled = true;
-
-            document.getElementById('answer-display').textContent = currentWord.spelling;
-            document.getElementById('result-area').classList.remove('hidden');
-            // 自動聚焦到按鈕以便 Enter 下一題
-            document.querySelector('#result-area button').focus(); 
-        }
-
-        // --- 4. 測驗流程控制 ---
+        // --- UI 邏輯 ---
         function nextQuestion() {
-            if (words.length === 0) return;
+            if (words.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            const randIdx = Math.floor(Math.random() * words.length);
+            currentWord = words[randIdx];
 
-            // 隨機選題
-            const randomIndex = Math.floor(Math.random() * words.length);
-            currentWord = words[randomIndex];
-
-            // UI 重置
+            // UI Reset
             const inputEl = document.getElementById('quiz-input');
             inputEl.value = '';
             inputEl.disabled = false;
-            resetInputStyles(inputEl);
+            inputEl.classList.remove('border-green-500', 'text-green-600', 'border-red-500', 'text-red-600');
+            inputEl.classList.add('border-gray-300');
             inputEl.focus();
 
             document.getElementById('quiz-meaning').textContent = currentWord.meaning;
             document.getElementById('quiz-pos').textContent = currentWord.pos;
             document.getElementById('result-area').classList.add('hidden');
-            document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('quiz-card').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
         }
 
         function showEmptyState() {
             document.getElementById('quiz-card').classList.add('hidden');
+            document.getElementById('result-area').classList.add('hidden');
             document.getElementById('empty-state').classList.remove('hidden');
         }
 
-        // --- 5. 單字管理邏輯 ---
-        function handleAddWord(e) {
-            e.preventDefault();
-            const spelling = document.getElementById('input-spelling').value.trim();
-            const meaning = document.getElementById('input-meaning').value.trim
+        function renderList() {
+            const tbody = document.getElementById('word-list-body');
+            tbody.innerHTML = '';
+            
+            [...words].reverse().forEach(word => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="p-3 text-blue-600 font-medium">${word.spelling}</td>
+                    <td class="p-3">${word.meaning}</td>
+                    <td class="p-3"><span class="bg-gray-200 text-xs px-2 py-1 rounded">${word.pos}</span></td>
+                    <td class="p-3">
+                        <button onclick="deleteWord(${word.id})" class="text-red-500 font-bold px-2 hover:bg-red-100 rounded">✕</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateCount() {
+            document.getElementById('word-count').textContent = words.length;
+        }
+
+        function switchTab(tabName) {
+            const viewQuiz = document.getElementById('view-quiz');
+            const viewManage = document.getElementById('view-manage');
+            const btnQuiz = document.getElementById('btn-quiz');
+            const btnManage = document.getElementById('btn-manage');
+
+            if (tabName === 'quiz') {
+                viewQuiz.classList.remove('hidden');
+                viewManage.classList.add('hidden');
+                
+                setActiveBtn(btnQuiz, true);
+                setActiveBtn(btnManage, false);
+                
+                if (words.length > 0) setTimeout(() => document.getElementById('quiz-input').focus(), 50);
+            } else {
+                viewQuiz.classList.add('hidden');
+                viewManage.classList.remove('hidden');
+                
+                setActiveBtn(btnManage, true);
+                setActiveBtn(btnQuiz, false);
+            }
+        }
+
+        function setActiveBtn(btn, isActive) {
+            if (isActive) {
+                btn.classList.remove('bg-gray-100', 'text-gray-600');
+                btn.classList.add('bg-blue-600', 'text-white');
+            } else {
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+                btn.classList.remove('bg-blue-600', 'text-white');
+            }
+        }
+        
+        function showSystemMessage(msg) {
+            const el = document.getElementById('system-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+    </script>
+</body>
+</html>
