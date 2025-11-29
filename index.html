@@ -3,49 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>單字特訓班 (JSON 穩定版)</title>
-    <!-- 為了美觀保留 Tailwind，但移除也不影響功能 -->
+    <title>單字特訓班 (多題庫版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* === 核心樣式 (不依賴 Tailwind) === */
         .hidden-force { display: none !important; }
-        
         body { font-family: system-ui, -apple-system, sans-serif; background: #f3f4f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { background: white; width: 100%; max-width: 800px; min-height: 600px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
-        
-        .nav-btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; background: #f3f4f6; color: #4b5563; }
+        .nav-btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; background: #f3f4f6; color: #4b5563; }
         .nav-btn:hover { background-color: #e5e7eb; }
-        .nav-btn.active { background-color: #2563eb; color: white; } 
-
+        .nav-btn.active { background-color: #2563eb; color: white; }
         .shake { animation: shake 0.3s ease-in-out; border-color: #ef4444 !important; color: #ef4444 !important; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        select { border: 1px solid #d1d5db; padding: 6px; border-radius: 4px; font-size: 14px; color: #374151; outline: none; background: white; max-width: 150px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <!-- Header -->
-        <div style="padding: 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: white;">
+        <div style="padding: 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: white; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <h1 style="margin: 0; font-size: 20px; color: #374151;">🔀 單字特訓班</h1>
+                
+                <!-- 題庫選擇器 -->
+                <select id="source-select" onchange="handleSourceChange()">
+                    <option value="" disabled selected>載入中...</option>
+                </select>
                 <span id="status-msg" style="font-size: 12px; color: #6b7280;"></span>
             </div>
+
             <div style="display: flex; gap: 8px;">
-                <!-- 直接在 HTML 綁定 onclick，這是最不會壞的方法 -->
-                <button id="btn-manage" class="nav-btn active" onclick="switchTab('manage')">1. 單字管理</button>
-                <button id="btn-quiz" class="nav-btn" onclick="switchTab('quiz')">2. 隨機測驗</button>
+                <button id="btn-manage" class="nav-btn active" onclick="switchTab('manage')">管理</button>
+                <button id="btn-quiz" class="nav-btn" onclick="switchTab('quiz')">測驗</button>
             </div>
         </div>
 
         <!-- 分頁 1: 管理 -->
         <div id="view-manage" style="padding: 24px; flex: 1; display: flex; flex-direction: column;">
             
+            <!-- 新增區 -->
             <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dbeafe;">
-                <h3 style="margin-top: 0; margin-bottom: 12px; color: #1e40af;">➕ 手動新增</h3>
+                <h3 style="margin-top: 0; margin-bottom: 12px; color: #1e40af; font-size: 16px;">➕ 新增 (存於本地瀏覽器)</h3>
                 <form id="add-form" style="display: flex; flex-wrap: wrap; gap: 10px;">
                     <input id="input-spelling" placeholder="英文 (Apple)" required style="flex: 2; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
                     <input id="input-meaning" placeholder="中文 (蘋果)" required style="flex: 2; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
@@ -54,14 +52,16 @@
                 </form>
             </div>
 
+            <!-- 列表統計 -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span style="color: #6b7280; font-size: 14px;">
-                    本地：<span id="cnt-local" style="font-weight: bold;">0</span> | 
-                    外部(JSON)：<span id="cnt-remote" style="font-weight: bold;">0</span>
+                    目前顯示：<span id="current-source-name" style="font-weight: bold; color: #2563eb;">--</span> 
+                    (<span id="cnt-total" style="font-weight: bold;">0</span> 字)
                 </span>
-                <button onclick="resetLocalData()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; text-decoration: underline;">清空本地</button>
+                <button onclick="resetLocalData()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; text-decoration: underline;">清空本地資料</button>
             </div>
 
+            <!-- 列表 -->
             <div style="flex: 1; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; position: relative;">
                 <div style="overflow-y: auto; height: 100%; max-height: 400px;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -75,7 +75,7 @@
                         </thead>
                         <tbody id="word-list-body"></tbody>
                     </table>
-                    <div id="list-empty-msg" style="display: none; text-align: center; padding: 40px; color: #9ca3af;">暫無單字</div>
+                    <div id="list-empty-msg" style="display: none; text-align: center; padding: 40px; color: #9ca3af;">此題庫暫無單字</div>
                 </div>
             </div>
         </div>
@@ -85,7 +85,9 @@
             <div style="width: 100%; height: 4px; background: #e5e7eb; margin-bottom: 8px; border-radius: 2px;">
                 <div id="progress-bar" style="width: 0%; height: 100%; background: #3b82f6; transition: width 0.3s;"></div>
             </div>
-            <div style="font-size: 12px; color: #6b7280; margin-bottom: 40px;">本輪剩餘：<span id="queue-count">0</span> 題</div>
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 40px;">
+                本輪剩餘：<span id="queue-count">0</span> 題
+            </div>
 
             <div id="quiz-card" style="width: 100%; max-width: 400px; margin: 0 auto;">
                 <div style="margin-bottom: 20px;">
@@ -106,26 +108,25 @@
 
             <div id="quiz-empty-msg" class="hidden-force">
                 <p style="font-size: 18px; color: #6b7280;">題庫是空的！</p>
-                <button onclick="switchTab('manage')" style="color: #2563eb; text-decoration: underline; background: none; border: none; cursor: pointer;">回首頁新增或檢查 JSON</button>
+                <button onclick="switchTab('manage')" style="color: #2563eb; text-decoration: underline; background: none; border: none; cursor: pointer;">回管理頁切換題庫</button>
             </div>
         </div>
     </div>
 
     <script>
-        // === 設定區：JSON 檔案列表 ===
-        const JSON_FILES = ['words.json']; 
-        const STORAGE_KEY = 'vocab_app_json_v1';
+        const CONFIG_FILE = 'config.json'; 
+        const STORAGE_KEY = 'vocab_app_multi_v1';
 
-        // === 狀態變數 ===
-        let localWords = [];
-        let remoteWords = [];
-        let allWords = [];
+        // 狀態變數
+        let configSources = []; // 儲存 config.json 的內容
+        let localWords = [];    // 本地 localStorage 的字
+        let remoteWords = [];   // 當前選中題庫的字
+        let displayWords = [];  // 列表顯示用的字 (local + remote)
         let quizQueue = [];
         let currentWord = null;
 
-        // === 程式入口 (確保 UI 先能動) ===
-        window.onload = function() {
-            // 1. 先初始化 UI 事件 (確保按鈕一定有效)
+        window.onload = async function() {
+            // 初始化 UI
             document.getElementById('add-form').onsubmit = handleAddWord;
             document.getElementById('quiz-input').oninput = checkAnswer;
             document.getElementById('quiz-input').onkeydown = (e) => {
@@ -134,14 +135,185 @@
                 }
             };
 
-            // 2. 載入本地資料
             loadLocalData();
-
-            // 3. 最後才去抓外部資料 (避免卡住 UI)
-            loadRemoteData();
+            await loadConfig(); // 1. 先讀取設定檔
         };
 
-        // === 核心 1: 分頁切換 (最穩定的寫法) ===
+        // --- 核心 1: 讀取設定與動態載入 ---
+        async function loadConfig() {
+            const select = document.getElementById('source-select');
+            select.innerHTML = '<option value="" disabled>載入中...</option>';
+            
+            try {
+                const res = await fetch(CONFIG_FILE);
+                if (!res.ok) throw new Error('無法讀取設定檔');
+                configSources = await res.json();
+                
+                // 建立下拉選單
+                select.innerHTML = '';
+                
+                // 選項 1: 全部載入
+                const allOpt = document.createElement('option');
+                allOpt.value = 'ALL';
+                allOpt.text = '📚 全部題庫';
+                select.appendChild(allOpt);
+
+                // 選項 2...N: 各個題庫
+                configSources.forEach(src => {
+                    const opt = document.createElement('option');
+                    opt.value = src.id; // 這裡是檔名, e.g. "toeic.json"
+                    opt.text = src.name;
+                    select.appendChild(opt);
+                });
+
+                // 預設選第一個 (全部) 或上次的選擇
+                handleSourceChange(); // 觸發載入
+
+            } catch (err) {
+                console.error(err);
+                select.innerHTML = '<option disabled>讀取失敗</option>';
+            }
+        }
+
+        async function handleSourceChange() {
+            const select = document.getElementById('source-select');
+            const selectedValue = select.value;
+            const status = document.getElementById('status-msg');
+            
+            status.innerText = '載入題庫中...';
+            remoteWords = []; // 清空舊的
+
+            try {
+                if (selectedValue === 'ALL') {
+                    // 併發載入所有檔案
+                    const promises = configSources.map(src => 
+                        fetch(src.id).then(r => r.ok ? r.json() : []).catch(() => [])
+                    );
+                    const results = await Promise.all(promises);
+                    
+                    results.forEach((data, index) => {
+                        if(Array.isArray(data)) {
+                            const sourceName = configSources[index].name;
+                            remoteWords = remoteWords.concat(processWords(data, sourceName));
+                        }
+                    });
+                    document.getElementById('current-source-name').innerText = '全部合併';
+                } else {
+                    // 單一載入
+                    const res = await fetch(selectedValue);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const sourceObj = configSources.find(s => s.id === selectedValue);
+                        const name = sourceObj ? sourceObj.name : '外部';
+                        remoteWords = processWords(data, name);
+                        document.getElementById('current-source-name').innerText = name;
+                    }
+                }
+            } catch (e) {
+                console.error("載入題庫失敗", e);
+            }
+
+            status.innerText = '';
+            updateDisplay();
+            
+            // 如果目前在測驗頁面，且題庫換了，強制重置測驗
+            if (!document.getElementById('view-quiz').classList.contains('hidden-force')) {
+                quizQueue = [];
+                currentWord = null;
+                initQuiz();
+            }
+        }
+
+        function processWords(data, sourceLabel) {
+            if (!Array.isArray(data)) return [];
+            return data.map(w => ({
+                id: 'remote_' + Math.random().toString(36).substr(2),
+                s: w.spelling,
+                m: w.meaning,
+                p: w.pos,
+                isRemote: true,
+                source: sourceLabel
+            }));
+        }
+
+        // --- 核心 2: UI 與 本地資料 ---
+        function loadLocalData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) localWords = JSON.parse(raw);
+            } catch (e) { localWords = []; }
+        }
+
+        function updateDisplay() {
+            // 列表顯示 = 本地 + 遠端
+            displayWords = [...localWords, ...remoteWords];
+            renderList();
+        }
+
+        function renderList() {
+            const tbody = document.getElementById('word-list-body');
+            tbody.innerHTML = '';
+            document.getElementById('cnt-total').innerText = displayWords.length;
+
+            if (displayWords.length === 0) {
+                document.getElementById('list-empty-msg').style.display = 'block';
+                return;
+            }
+            document.getElementById('list-empty-msg').style.display = 'none';
+
+            // 渲染前 150 筆避免卡頓
+            displayWords.slice(0, 150).forEach(w => {
+                const tr = document.createElement('tr');
+                
+                // 來源標籤
+                let badgeText = w.isRemote ? (w.source || '外部') : '本地自建';
+                let badgeColor = w.isRemote ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                
+                const action = w.isRemote
+                    ? `<span style="color:#ccc">🔒</span>`
+                    : `<button onclick="deleteLocalWord(${w.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;">✕</button>`;
+
+                tr.innerHTML = `
+                    <td style="padding:12px; color:#2563eb; font-family:monospace;">${w.s}</td>
+                    <td style="padding:12px;">${w.m}</td>
+                    <td style="padding:12px;"><span style="background:#f3f4f6; padding:2px 6px; border-radius:4px; font-size:12px;">${w.p}</span></td>
+                    <td style="padding:12px; text-align:right; font-size:12px;">
+                        <span class="${badgeColor} px-2 py-1 rounded mr-2">${badgeText}</span>
+                        ${action}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- 核心 3: 新增/刪除/測驗 (與之前版本相同) ---
+        function handleAddWord(e) {
+            e.preventDefault();
+            const s = document.getElementById('input-spelling').value.trim();
+            const m = document.getElementById('input-meaning').value.trim();
+            const p = document.getElementById('input-pos').value.trim();
+            if (!s || !m) return;
+
+            localWords.unshift({ id: Date.now(), s, m, p, isRemote: false });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(localWords));
+            e.target.reset();
+            document.getElementById('input-spelling').focus();
+            updateDisplay();
+        }
+
+        function deleteLocalWord(id) {
+            localWords = localWords.filter(w => w.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(localWords));
+            updateDisplay();
+        }
+
+        function resetLocalData() {
+            if(!confirm('清空本地資料？(外部題庫不會受影響)')) return;
+            localWords = [];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(localWords));
+            updateDisplay();
+        }
+
         function switchTab(tab) {
             const viewManage = document.getElementById('view-manage');
             const viewQuiz = document.getElementById('view-quiz');
@@ -152,155 +324,38 @@
                 viewManage.classList.remove('hidden-force');
                 viewManage.style.display = 'flex';
                 viewQuiz.classList.add('hidden-force');
-                
                 btnManage.classList.add('active');
                 btnQuiz.classList.remove('active');
             } else {
                 viewManage.classList.add('hidden-force');
                 viewQuiz.classList.remove('hidden-force');
                 viewQuiz.style.display = 'flex';
-
                 btnManage.classList.remove('active');
                 btnQuiz.classList.add('active');
-                
-                // 切換過來時，如果還沒題目，就出題
                 initQuiz();
             }
         }
 
-        // === 核心 2: 資料載入 ===
-        function loadLocalData() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) localWords = JSON.parse(raw);
-            } catch (e) { localWords = []; }
-            updateAllWords();
-        }
-
-        async function loadRemoteData() {
-            const status = document.getElementById('status-msg');
-            status.innerText = '載入 JSON 中...';
-            remoteWords = [];
-
-            for (const file of JSON_FILES) {
-                try {
-                    const res = await fetch(file);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    
-                    if (Array.isArray(data)) {
-                        // 加上標記
-                        const labeled = data.map(w => ({
-                            id: 'json_' + Math.random().toString(36).substr(2),
-                            s: w.spelling,
-                            m: w.meaning,
-                            p: w.pos,
-                            isRemote: true
-                        }));
-                        remoteWords = remoteWords.concat(labeled);
-                    }
-                } catch (err) {
-                    console.warn(`無法載入 ${file}:`, err);
-                    // 不報錯給使用者，避免干擾體驗
-                }
-            }
-            status.innerText = ''; // 清除載入訊息
-            updateAllWords();
-        }
-
-        function updateAllWords() {
-            allWords = [...localWords, ...remoteWords];
-            renderList();
-        }
-
-        // === 核心 3: 管理功能 ===
-        function handleAddWord(e) {
-            e.preventDefault();
-            const s = document.getElementById('input-spelling').value.trim();
-            const m = document.getElementById('input-meaning').value.trim();
-            const p = document.getElementById('input-pos').value.trim();
-            if (!s || !m) return;
-
-            localWords.unshift({ id: Date.now(), s, m, p, isRemote: false });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(localWords));
-            
-            e.target.reset();
-            document.getElementById('input-spelling').focus();
-            updateAllWords();
-        }
-
-        function deleteLocalWord(id) {
-            localWords = localWords.filter(w => w.id !== id);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(localWords));
-            updateAllWords();
-        }
-
-        function resetLocalData() {
-            if(!confirm('確定清空？')) return;
-            localWords = [];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(localWords));
-            updateAllWords();
-        }
-
-        function renderList() {
-            const tbody = document.getElementById('word-list-body');
-            tbody.innerHTML = '';
-            document.getElementById('cnt-local').innerText = localWords.length;
-            document.getElementById('cnt-remote').innerText = remoteWords.length;
-
-            if (allWords.length === 0) {
-                document.getElementById('list-empty-msg').style.display = 'block';
-            } else {
-                document.getElementById('list-empty-msg').style.display = 'none';
-                
-                // 渲染前 200 筆
-                allWords.slice(0, 200).forEach(w => {
-                    const tr = document.createElement('tr');
-                    const badge = w.isRemote 
-                        ? `<span style="background:#d1fae5; color:#065f46; padding:2px 6px; rounded:4px; font-size:11px;">JSON</span>` 
-                        : `<span style="background:#dbeafe; color:#1e40af; padding:2px 6px; rounded:4px; font-size:11px;">本地</span>`;
-                    
-                    const action = w.isRemote
-                        ? `<span style="color:#9ca3af; font-size:12px;">🔒</span>`
-                        : `<button onclick="deleteLocalWord(${w.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;">✕</button>`;
-
-                    tr.innerHTML = `
-                        <td style="padding:12px; color:#2563eb; font-family:monospace;">${w.s}</td>
-                        <td style="padding:12px;">${w.m}</td>
-                        <td style="padding:12px;"><span style="background:#f3f4f6; padding:2px 6px; border-radius:4px; font-size:12px;">${w.p}</span></td>
-                        <td style="padding:12px; text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:8px;">${badge} ${action}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        // === 核心 4: 測驗功能 ===
         function initQuiz() {
-            // 如果沒有題目
-            if (allWords.length === 0) {
+            if (displayWords.length === 0) {
                 document.getElementById('quiz-card').classList.add('hidden-force');
                 document.getElementById('quiz-empty-msg').classList.remove('hidden-force');
                 return;
             }
-
             document.getElementById('quiz-empty-msg').classList.add('hidden-force');
             document.getElementById('quiz-card').classList.remove('hidden-force');
-
-            // 如果當前沒有題目，或者題目已經答完，就出新題
+            
             if (!currentWord || !document.getElementById('btn-next').classList.contains('hidden-force')) {
-                 // 只有在剛切換過來且沒題目時才自動出題
-                 if (!currentWord) nextQuestion();
+                 if(!currentWord) nextQuestion();
             }
         }
 
         function nextQuestion() {
-            if (allWords.length === 0) return;
+            if (displayWords.length === 0) return;
 
-            // 洗牌/補牌
             if (quizQueue.length === 0) {
-                let temp = [...allWords];
-                // Fisher-Yates 洗牌
+                // 混合洗牌 (本地+目前選中的遠端)
+                let temp = [...displayWords];
                 for (let i = temp.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [temp[i], temp[j]] = [temp[j], temp[i]];
@@ -317,13 +372,11 @@
             input.disabled = false;
             input.style.color = 'black';
             input.style.borderBottomColor = '#d1d5db';
-            
             document.getElementById('quiz-msg').innerText = '';
             document.getElementById('btn-next').classList.add('hidden-force');
             
             document.getElementById('quiz-meaning').innerText = currentWord.m;
             document.getElementById('quiz-pos').innerText = currentWord.p;
-
             setTimeout(() => input.focus(), 50);
         }
 
@@ -358,7 +411,7 @@
         }
 
         function updateProgress() {
-            const total = allWords.length || 1;
+            const total = displayWords.length || 1;
             const remain = quizQueue.length;
             const percent = ((total - remain) / total) * 100;
             document.getElementById('queue-count').innerText = remain;
