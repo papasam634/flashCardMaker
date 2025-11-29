@@ -1,17 +1,117 @@
 [
   {
-    "spelling": "Ambiguous",
-    "meaning": "模稜兩可的",
-    "pos": "adj."
+    "spelling": "sat",
+    "meaning": "坐",
+    "pos": "pv"
   },
   {
-    "spelling": "Benevolent",
-    "meaning": "仁慈的",
-    "pos": "adj."
+    "spelling": "stood",
+    "meaning": "站",
+    "pos": "pv"
   },
   {
-    "spelling": "Procrastinate",
-    "meaning": "拖延",
-    "pos": "v."
+    "spelling": "felt",
+    "meaning": "覺得/摸起來",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to fight",
+    "meaning": "打架/吵架",
+    "pos": "v"
+  },
+  {
+    "spelling": "fought",
+    "meaning": "打架/吵架",
+    "pos": "pv"
+  },
+  {
+    "spelling": "found",
+    "meaning": "找到/發覺/撿到",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to fit",
+    "meaning": "適合",
+    "pos": "v"
+  },
+  {
+    "spelling": "fit",
+    "meaning": "適合",
+    "pos": "pv"
+  },
+  {
+    "spelling": "flew",
+    "meaning": "飛",
+    "pos": "pv"
+  },
+  {
+    "spelling": "forgot",
+    "meaning": "忘記",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to forgive",
+    "meaning": "原諒",
+    "pos": "v"
+  },
+  {
+    "spelling": "forgave",
+    "meaning": "原諒",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to freeze",
+    "meaning": "結冰",
+    "pos": "v"
+  },
+  {
+    "spelling": "froze",
+    "meaning": "結冰",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to grow",
+    "meaning": "成長/種植",
+    "pos": "v"
+  },
+  {
+    "spelling": "grew",
+    "meaning": "成長/種植",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to hang",
+    "meaning": "吊/掛",
+    "pos": "v"
+  },
+  {
+    "spelling": "hung",
+    "meaning": "吊/掛",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to hide",
+    "meaning": "躲/藏",
+    "pos": "v"
+  },
+  {
+    "spelling": "hid",
+    "meaning": "躲/藏",
+    "pos": "pv"
+  },
+  {
+    "spelling": "to hit",
+    "meaning": "打/擊",
+    "pos": "v"
+  },
+  {
+    "spelling": "hit",
+    "meaning": "打/擊",
+    "pos": "pv"
+  },
+  {
+    "spelling": "a refrigerator",
+    "meaning": "一台冰箱",
+    "pos": "cn"
   }
 ]
