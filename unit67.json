@@ -1,0 +1,22 @@
+[
+  { "spelling": "carry", "meaning": "帶出；提；搬；抬", "pos": "v" },
+  { "spelling": "held", "meaning": "拿著；握住；抱著（過去式）", "pos": "pv" },
+  { "spelling": "arrive", "meaning": "到達", "pos": "v" },
+  { "spelling": "hurt", "meaning": "傷害；使受傷；使疼痛", "pos": "v" },
+  { "spelling": "keep", "meaning": "保持；持續；保留", "pos": "v" },
+  { "spelling": "kept", "meaning": "保持；保留（過去式）", "pos": "pv" },
+  { "spelling": "lay", "meaning": "放；放置", "pos": "v" },
+  { "spelling": "laid", "meaning": "放；放置（過去式）", "pos": "pv" },
+  { "spelling": "lead", "meaning": "帶路；領導；引導", "pos": "v" },
+  { "spelling": "left", "meaning": "離開；留下（過去式）", "pos": "pv" },
+  { "spelling": "lend", "meaning": "借出", "pos": "v" },
+  { "spelling": "swarm", "meaning": "成群移動；蜂擁而至", "pos": "pv" },
+  { "spelling": "cart", "meaning": "一台手推推車", "pos": "cn" },
+  { "spelling": "groceries", "meaning": "食品雜貨；民生用品", "pos": "pcn" },
+  { "spelling": "item", "meaning": "一品項；一項商品", "pos": "cn" },
+  { "spelling": "entire", "meaning": "整個的；全部的", "pos": "adj" },
+  { "spelling": "checkout line", "meaning": "結帳隊伍（結帳隊欄）", "pos": "cn phr" },
+  { "spelling": "rock music", "meaning": "搖滾音樂", "pos": "ucn phr" },
+  { "spelling": "jazz", "meaning": "爵士樂", "pos": "ucn" },
+  { "spelling": "classical music", "meaning": "古典音樂", "pos": "ucn phr" }
+]
